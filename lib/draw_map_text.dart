@@ -391,10 +391,11 @@ class PointsPainter extends CustomPainter {
       }
 
       
-      if(currentRoomName == memberSearched.room && memberSearched.name != "")
+      if(currentRoomName == memberSearched.room && memberSearched.name != "") {
         finalTextDisplayed = "Person in\n$currentRoomName";
-      else
+      } else {
         finalTextDisplayed = currentRoomName;
+      }
 
 
       TextSpan textSpan = TextSpan(

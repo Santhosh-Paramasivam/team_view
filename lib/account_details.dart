@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'search_page_members.dart';
 import 'status_and_visibility.dart';
 import 'search_page_room.dart';
+import 'firestore_query.dart';
+import 'firestore_query_autoupdate.dart';
 
 class AccountDetails extends StatelessWidget
 {
@@ -41,6 +43,20 @@ class AccountDetails extends StatelessWidget
             (
               context,
               MaterialPageRoute(builder: (context) => const SearchPage())
+            );
+          }),
+           MenuButton("Firestore Query", (context){
+            Navigator.push
+            (
+              context,
+              MaterialPageRoute(builder: (context) => UsersPage())
+            );
+          }),
+            MenuButton("Firestore Stream", (context){
+            Navigator.push
+            (
+              context,
+              MaterialPageRoute(builder: (context) => UserPageAutoupdate())
             );
           }),
           MenuButton("Log Out", (context){

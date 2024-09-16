@@ -44,4 +44,5 @@ app.*.map.json
 
 # service keys
 python_backend/service_keys/
-
+android/app/google-services.json
+lib/firebase_options.dart
