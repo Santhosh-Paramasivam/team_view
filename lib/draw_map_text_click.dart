@@ -143,7 +143,7 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
 
         for (Room room in roomsOnFloor) {
           if (room.roomName == memberSearched.room) {
-            centering = Offset(100, 100);
+            centering = const Offset(100, 100);
           }
         }
       }
@@ -225,10 +225,11 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
     print("Tap Down Detected");
     print(details.localPosition);
 
-    if (this.roomPaths[0].contains(scaler(details.localPosition)))
+    if (this.roomPaths[0].contains(scaler(details.localPosition))) {
       print("The rectangle has been toucheth");
-    else
+    } else {
       print("RIP BOZO");
+    }
   }
 
   void _onScaleStart(ScaleStartDetails details) {
@@ -401,10 +402,11 @@ class PointsPainter extends CustomPainter {
         canvas.drawPath(roomPath, pathPaintStrokeAbsent);
       }
 
-      if (currentRoomName == memberSearched.room && memberSearched.name != "")
+      if (currentRoomName == memberSearched.room && memberSearched.name != "") {
         finalTextDisplayed = "Person in\n$currentRoomName";
-      else
+      } else {
         finalTextDisplayed = currentRoomName;
+      }
 
       TextSpan textSpan = TextSpan(
         text: finalTextDisplayed,
