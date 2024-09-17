@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'single_firestore.dart';
 
 class UserPageAutoupdate extends StatelessWidget {
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +12,7 @@ class UserPageAutoupdate extends StatelessWidget {
         title: Text('Users List'),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: firestore.collection('rfid_users').where('user_id', isGreaterThan: 0).snapshots(),
+        stream: FirestoreService().firestore.collection('rfid_users').where('user_id', isGreaterThan: 0).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());

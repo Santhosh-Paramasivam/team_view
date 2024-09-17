@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'custom_datatypes/member.dart';
+import 'single_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Room {
   List<Offset> roomVertices;
@@ -55,6 +57,8 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
   late double initialScale; // To keep track of the previous drag position
   late Size drawingWindowSize;
 
+  late bool mapLoadingUp;
+
   late Path path;
   late List<Path> roomPaths = <Path>[];
 
@@ -77,8 +81,9 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
     previousOffset = Offset.zero;
     initialScale = 1.0;
 
+    mapLoadingUp = true;
     loadingPersonRoom();
-    buildingOffsetsLoad();
+    fetchUsersData();
   }
 
   void refreshName(name) {
@@ -87,8 +92,10 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
     xposition = 0;  // Reset panning
     yposition = 0;  // Reset panning
     scale = 0.6;    // Optionally reset the scale if needed
+
+    mapLoadingUp = true;
     loadingPersonRoom();
-    buildingOffsetsLoad();
+    fetchUsersData();
   });
 }
 
@@ -97,7 +104,8 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
   {
     setState((){
       floorName = floor;
-      buildingOffsetsLoad();
+      mapLoadingUp = true;
+      fetchUsersData();
     });
   }
 
@@ -180,6 +188,94 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
           }
         }
       }
+    });
+  }
+  
+  Future<void> fetchUsersData() async {
+
+      roomsOnFloor.clear();
+  
+      Map <String,dynamic> institution = {};
+      String institutionDocName = '';
+      String buildingDocName = '';
+      Map <String,dynamic> building = {};
+      List<List<int>> building_boundaries = []; 
+      late Map <String,dynamic> floor = {};
+
+      QuerySnapshot snapshot = await FirestoreService().firestore
+          .collection('institution_buildings')
+          .where('institution_id', isEqualTo: appUserInstitutionID)
+          .limit(1)
+          .get();
+
+      for(QueryDocumentSnapshot doc in snapshot.docs)
+      {
+        institutionDocName = doc.id;
+        institution = doc.data() as Map<String,dynamic>;
+      }
+
+      QuerySnapshot snapshot1 = await FirestoreService().firestore
+        .collection('institution_buildings')
+        .doc(institutionDocName)
+        .collection('buildings')
+        .where("building_name", isEqualTo: memberSearched.building)
+        .limit(1)
+        .get();
+
+      for(QueryDocumentSnapshot doc in snapshot1.docs)
+      {
+        buildingDocName = doc.id;
+        building = doc.data() as Map<String,dynamic>;
+      }
+
+      building_boundaries = jsonDecode(building['building_boundaries'])
+      .map<List<int>>((item) => List<int>.from(item))
+      .toList();
+
+      for(List<int> point in building_boundaries)
+      {
+        buildingBoundaries.add(Offset(point[0].toDouble(),point[1].toDouble()));
+        //print(Offset(point[0].toDouble(),point[1].toDouble()));
+      }
+
+      QuerySnapshot snapshot2 = await FirestoreService().firestore
+        .collection('institution_buildings')
+        .doc(institutionDocName)
+        .collection('buildings')
+        .doc(buildingDocName)
+        .collection('floors')
+        .where('floor_name', isEqualTo: memberSearched.floor)
+        .limit(1)
+        .get();
+
+      for(QueryDocumentSnapshot doc in snapshot2.docs)
+      {
+        //buildingDocName = doc.id;
+        floor = doc.data() as Map<String,dynamic>;
+        floor = json.decode(floor['rooms_on_floor']) as Map<String,dynamic>;
+      }
+
+    setState((){
+      floor.forEach((key, value) {
+
+          List<Offset> points = (value as List).map<Offset>((item) {
+            double x = item[0].toDouble();
+            double y = item[1].toDouble();
+            return Offset(x, y);
+          }).toList();
+
+          roomsOnFloor.add(Room(points, key));
+        });
+
+      for(Room room in roomsOnFloor)
+        {
+          if(room.roomName == memberSearched.room)
+          {
+            centering = room.roomCenter;
+          }
+      }
+
+      mapLoadingUp = false;
     });
   }
 
@@ -266,7 +362,9 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
                 width: double.infinity,
                 height: 500,
                 color: const Color.fromARGB(255, 255, 255, 255),
-                child: CustomPaint(
+                child: mapLoadingUp 
+                ? Center(child: CircularProgressIndicator())
+                : CustomPaint(
                 painter: PointsPainter(
                       xposition, yposition, scale, roomsOnFloor, memberSearched, buildingBoundaries, centering, getPathAndSize,
                 ))

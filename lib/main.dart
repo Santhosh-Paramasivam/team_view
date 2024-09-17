@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,12 +19,19 @@ class MyApp extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp
+    return MultiProvider(
+      providers: [
+        Provider<FirebaseFirestore>(
+          create: (_) => FirebaseFirestore.instance,
+        ),
+      ],
+      child: MaterialApp
     (
         title: "TeamView",
         theme: ThemeData(primarySwatch: Colors.blue, visualDensity: VisualDensity.adaptivePlatformDensity),
         home: Login(),
         debugShowCheckedModeBanner: false,
+    ),
     );
   }
 }
