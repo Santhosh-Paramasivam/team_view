@@ -7,6 +7,7 @@ import 'search_page_room.dart';
 import 'firebase_templates/firestore_query.dart';
 import 'firebase_templates/firestore_query_autoupdate.dart';
 import 'firebase_templates/firebase_query_returndata copy.dart';
+import 'firebase_templates/firestore_member_autoupdate_query.dart';
 
 class AccountDetails extends StatelessWidget
 {
@@ -46,13 +47,6 @@ class AccountDetails extends StatelessWidget
               MaterialPageRoute(builder: (context) => const SearchPage())
             );
           }),
-           MenuButton("Firestore Query", (context){
-            Navigator.push
-            (
-              context,
-              MaterialPageRoute(builder: (context) => UsersPage())
-            );
-          }),
             MenuButton("Firestore Stream", (context){
             Navigator.push
             (
@@ -64,7 +58,7 @@ class AccountDetails extends StatelessWidget
             Navigator.push
             (
               context,
-              MaterialPageRoute(builder: (context) => ReturnPrintData())
+              MaterialPageRoute(builder: (context) => MemberAutoUpdate())
             );
           }),
           MenuButton("Log Out", (context){

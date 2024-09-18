@@ -82,8 +82,8 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
     initialScale = 1.0;
 
     mapLoadingUp = true;
-    loadingPersonRoom();
-    fetchUsersData();
+    loadingPersonRoomCloud();
+    loadFloors();
   }
 
   void refreshName(name) {
@@ -95,7 +95,7 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
 
     mapLoadingUp = true;
     loadingPersonRoom();
-    fetchUsersData();
+    loadFloors();
   });
 }
 
@@ -105,7 +105,8 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
     setState((){
       floorName = floor;
       mapLoadingUp = true;
-      fetchUsersData();
+      loadingPersonRoom();
+      loadFloors();
     });
   }
 
@@ -124,74 +125,47 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
       );
       /* IMPORTANT COMMENT: ONLY THE INSTITUION OF THE USER MUST BE QUERIED */
       // Check if person is null before accessing its properties
-      memberSearched.changeManualLocation(person?['manual_location'] ?? 'A/B/C');
+      memberSearched.changeRFIDLocation(person?['manual_location'] ?? 'A/B/C');
       memberSearched.name = person?['name'] ?? 'Default';
       memberSearched.id = person?['id'] ?? 0;
       memberSearched.institutionID = person?['id'] ?? 0; 
-      //print("Person" + person);
-      //print("person name " + personName);
-      //print(personName + appUserInstitutionID.toString());
-      //print(appUserInstitutionID);
-      //print(memberSearched.manualLocation + memberSearched.name);
-      //print("Building name : " + memberSearched.building);
-    });
-  } catch (e) {
-    print('Error loading JSON: $e');
+      });
+    } catch (e) {
+      print('Error loading JSON: $e');
+    }
   }
-}
 
-  Future<void> buildingOffsetsLoad() async {
-    // Load the JSON file
-    String jsonString = await rootBundle.loadString('assets/buildings.json');
-    
-    roomsOnFloor.clear();
-    ///print("offset func reached");
+  Future<void> loadingPersonRoomCloud() async {
+  try {
 
-    setState(() {
-      jsonData = json.decode(jsonString);
-
-      var building = jsonData?['buildings']?.firstWhere((building) =>
-          building['institution_id'] == appUserInstitutionID &&
-          //building['building_id'] == buildingId,
-          building['building_name'] == memberSearched.building,
-          orElse: () => null);
-
-      if (building != null) {
-        var floorData = building[memberSearched.floor];
-        var buildingCoordinates = building["BuildingBoundaries"];
-
-        //print(buildingCoordinates);
-        buildingCoordinates?.forEach((item)
-        {
-          double x = item[0].toDouble();
-          double y = item[1].toDouble();
-          buildingBoundaries.add(Offset(x,y));
-        });
-        //print(buildingBoundaries);
-        
-        floorData?.forEach((key, value) {
-
-          List<Offset> points = (value as List).map<Offset>((item) {
-            double x = item[0].toDouble();
-            double y = item[1].toDouble();
-            return Offset(x, y);
-          }).toList();
-
-          roomsOnFloor.add(Room(points, key));
-        });
-
-        for(Room room in roomsOnFloor)
-        {
-          if(room.roomName == memberSearched.room)
-          {
-            centering = room.roomCenter;
-          }
+    await FirestoreService().firestore
+          .collection("institution_members")
+          .where("name", isEqualTo: personName)
+          .where("institution_id", isEqualTo: appUserInstitutionID)
+          .limit(1)
+          .snapshots()
+          .listen((event) {
+       setState(()
+       {
+         for (var doc in event.docs) {
+          Map<String,dynamic> personDetails = doc.data() as Map<String,dynamic>;
+          memberSearched.changeRFIDLocation(personDetails['rfid_location']);
+          memberSearched.name = personDetails['name'];
+          memberSearched.institutionID = personDetails['institution_id'];
+          memberSearched.id = personDetails['id'];
+          //print("\n\n\n\n\n\nPrinting Doc Details");
+          //print(personDetails['name']);
+          //print(personDetails['rfid_location']);
         }
-      }
-    });
+       });
+          
+      });
+    } catch (e) {
+      print('Error loading JSON: $e');
+    }
   }
-  
-  Future<void> fetchUsersData() async {
+
+  Future<void> loadFloors() async {
 
       roomsOnFloor.clear();
   

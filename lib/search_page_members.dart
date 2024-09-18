@@ -82,7 +82,7 @@ class _SearchPageState extends State<SearchPage> {
         doDisplayMemberDetails = true;
         memberForMemberDetails.name = member['name'];
         memberForMemberDetails.id = member['id'];
-        memberForMemberDetails.changeManualLocation(member['manual_location']);
+        memberForMemberDetails.changeRFIDLocation(member['manual_location']);
         memberForMemberDetails.institutionID = appUserInstitutionID;
         memberForMemberDetails.role = member['user_role'];
         memberForMemberDetails.status = member['status'];

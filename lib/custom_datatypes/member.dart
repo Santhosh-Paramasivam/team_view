@@ -1,7 +1,7 @@
 class Member
 {
   String name;
-  String manualLocation;
+  String rfidLocation;
   int institutionID;
   int id;
   late String floor;
@@ -12,20 +12,20 @@ class Member
   String status;
   //int buildingID;
 
-  Member(this.name, this.manualLocation, this.institutionID, this.id, this.role, this.memberID, this.status)
+  Member(this.name, this.rfidLocation, this.institutionID, this.id, this.role, this.memberID, this.status)
   {
-    List<String> manualLocationList = manualLocation.split("/");
-    building = manualLocationList[0];
-    floor = manualLocationList[1];
-    room = manualLocationList[2];
+    List<String> rfidLocationList = rfidLocation.split("/");
+    building = rfidLocationList[0];
+    floor = rfidLocationList[1];
+    room = rfidLocationList[2];
   }
 
-  void changeManualLocation(String newManualLocation)
+  void changeRFIDLocation(String newRFIDLocation)
   {
-    manualLocation = newManualLocation;
-    List<String> manualLocationList = manualLocation.split("/");
-    building= manualLocationList[0];
-    floor = manualLocationList[1];
-    room = manualLocationList[2];
+    rfidLocation = newRFIDLocation;
+    List<String> rfidLocationList = rfidLocation.split("/");
+    building= rfidLocationList[0];
+    floor = rfidLocationList[1];
+    room = rfidLocationList[2];
   }
 }

@@ -26,7 +26,6 @@ class _UsersPageState extends State<ReturnPrintData> {
     super.initState();
     fetchUsersData(); // Fetch data when the widget initializes
   }
-
   // Function to query Firestore and store data
   Future<void> fetchUsersData() async {
     try {

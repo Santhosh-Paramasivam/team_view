@@ -50,7 +50,7 @@ class _SearchPageState extends State<SearchPage> {
     const DropdownMenuItem(value: 'Designation', child: Text("Designation")),
   ];
 
-  void displayMember() async{
+  void display async{
     setState(() {
       name = _searchController.text;
     });
