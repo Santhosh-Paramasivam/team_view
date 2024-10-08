@@ -513,7 +513,7 @@ class PointsPainter extends CustomPainter {
       }
 
       canvas.drawPoints(PointMode.points, [Offset(390,500)], pathPaintFill);
-      canvas.drawCircle(Offset(0,0),10, pathPaintFill);
+      //canvas.drawCircle(Offset(0,0),10, pathPaintFill);
 
       if(noneInside) continue;
 

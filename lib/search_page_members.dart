@@ -5,11 +5,42 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'drop_down_box.dart';
 import 'draw_map_text.dart';
-import 'custom_datatypes/member.dart';
 import 'members_search_bar.dart';
 import 'single_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 
+class Member
+{
+  String name;
+  String rfidLocation;
+  int institutionID;
+  int id;
+  late String floor;
+  late String building;
+  late String room;
+  String role;
+  String memberID;
+  String status;
+  //int buildingID;
+
+  Member(this.name, this.rfidLocation, this.institutionID, this.id, this.role, this.memberID, this.status)
+  {
+    List<String> rfidLocationList = rfidLocation.split("/");
+    building = rfidLocationList[0];
+    floor = rfidLocationList[1];
+    room = rfidLocationList[2];
+  }
+
+  void changeRFIDLocation(String newRFIDLocation)
+  {
+    rfidLocation = newRFIDLocation;
+    List<String> rfidLocationList = rfidLocation.split("/");
+    building= rfidLocationList[0];
+    floor = rfidLocationList[1];
+    room = rfidLocationList[2];
+  }
+}
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -31,6 +62,8 @@ class _SearchPageState extends State<SearchPage> {
 
   final GlobalKey<MapDetailsDisplayWidgetState> _mapDetailsDisplayWidget = GlobalKey<MapDetailsDisplayWidgetState>();
   final GlobalKey<MemberSearchBarState> _memberSearchBar = GlobalKey<MemberSearchBarState>();
+
+  Map<String,dynamic> prevPersonDetails = Map<String,dynamic>();
 
   @override
   initState()
@@ -113,49 +146,144 @@ class _SearchPageState extends State<SearchPage> {
     });
   }
 
+  /*
+           StreamBuilder<QuerySnapshot>(
+              stream: fetchUsersStream(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                      return Container(
+                    width: double.infinity,
+                    height: 100,
+                    color: const Color.fromARGB(255, 255, 255, 255),
+                    child: Text("Error fetching data"));
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Container(
+                width: double.infinity,
+                height: 100,
+                color: const Color.fromARGB(255, 255, 255, 255),
+                child: Text("No user found"));
+                }
+
+                var doc = snapshot.data!.docs.first;
+                Map<String, dynamic> personDetails = doc.data() as Map<String, dynamic>;
+
+                final eq = const DeepCollectionEquality().equals;
+
+                if(!eq(personDetails, prevPersonDetails))
+                {
+                  print("Auto-update data reached");
+
+                    doDisplayMemberDetails = true;
+                    memberForMemberDetails.name = personDetails['name'];
+                    memberForMemberDetails.id = personDetails['id'];
+                    memberForMemberDetails.changeRFIDLocation(personDetails['rfid_location']);
+                    memberForMemberDetails.institutionID = appUserInstitutionID;
+                    memberForMemberDetails.role = personDetails['user_role'];
+                    memberForMemberDetails.status = personDetails['status'];
+
+                    if(memberForMemberDetails.role == "Professor")
+                    {
+                      memberForMemberDetails.memberID = personDetails['faculty_id'];
+                    }
+                    else if(memberForMemberDetails.role == "Student")
+                    {
+                      memberForMemberDetails.memberID = personDetails['register_id'];
+                    }
+                  prevPersonDetails = Map.from(personDetails);
+                }
+                return Column(
+                  children: <Widget>[
+                    Column(children: [
+                      Row(children: [
+                    const SizedBox(width: 10),
+                    Padding(padding: const EdgeInsets.fromLTRB(10, 15, 10, 15), child:  Text("${memberForMemberDetails.building} / ${memberForMemberDetails.floor}"),),
+                    const Spacer(),
+                    ],
+                    )
+                    ]),
+                    MapDetailsDisplayWidget(key: _mapDetailsDisplayWidget),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  MemberDetails(this.memberForMemberDetails)
+                  ],
+                );
+              },
+           ),
+           */
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MemberSearchBar(_memberSearchBar, displayMemberNew, displayMemberDetails),
-      //AppBar(
-      //  title: const Text("Search Page"),
-      //  backgroundColor: Colors.blue,
-      //   foregroundColor: Colors.white,
-      //),
       body: SizedBox(
         width: double.infinity,
         height: double.infinity,
-        child: Column(
-          children: <Widget>[
-            Column(children: [
-              Row(children: [
-            const SizedBox(width: 10),
-            Text("${memberForMemberDetails.building} / ${memberForMemberDetails.floor}"),
-            const Spacer(),
-            CustomDropdownButton(value: selectedInputType, items: valuesInputType, onChanged: (String? newInputType) {
-                setState(() {
-                  if (newInputType != null) {
-                    selectedInputType = newInputType;
-                  }
-                });
-              },
-              padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
-            ),
-            ],
-            )
-            ]),
-            MapDetailsDisplayWidget(key: _mapDetailsDisplayWidget),
-            //MapDisplayWidget()
-            //Spacer
-           // (
+        child: StreamBuilder<QuerySnapshot>(
+              stream: fetchUsersStream(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                      return Container(
+                    width: double.infinity,
+                    height: 100,
+                    color: const Color.fromARGB(255, 255, 255, 255),
+                    child: Text("Error fetching data"));
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Container(
+                width: double.infinity,
+                height: 100,
+                color: const Color.fromARGB(255, 255, 255, 255),
+                child: Text("No user found"));
+                }
 
-           // ),
-           const SizedBox(
-            height: 15,
+                var doc = snapshot.data!.docs.first;
+                Map<String, dynamic> personDetails = doc.data() as Map<String, dynamic>;
+
+                final eq = const DeepCollectionEquality().equals;
+
+                if(!eq(personDetails, prevPersonDetails))
+                {
+                  print("Auto-update data reached");
+
+                    doDisplayMemberDetails = true;
+                    memberForMemberDetails.name = personDetails['name'];
+                    memberForMemberDetails.id = personDetails['id'];
+                    memberForMemberDetails.changeRFIDLocation(personDetails['rfid_location']);
+                    memberForMemberDetails.institutionID = appUserInstitutionID;
+                    memberForMemberDetails.role = personDetails['user_role'];
+                    memberForMemberDetails.status = personDetails['status'];
+
+                    if(memberForMemberDetails.role == "Professor")
+                    {
+                      memberForMemberDetails.memberID = personDetails['faculty_id'];
+                    }
+                    else if(memberForMemberDetails.role == "Student")
+                    {
+                      memberForMemberDetails.memberID = personDetails['register_id'];
+                    }
+                  prevPersonDetails = Map.from(personDetails);
+                }
+                return Column(
+                  children: <Widget>[
+                    Column(children: [
+                      Row(children: [
+                    const SizedBox(width: 10),
+                    Padding(padding: const EdgeInsets.fromLTRB(10, 15, 10, 15), child:  Text("${memberForMemberDetails.building} / ${memberForMemberDetails.floor} / ${memberForMemberDetails.room}"),),
+                    const Spacer(),
+                    ],
+                    )
+                    ]),
+                    MapDetailsDisplayWidget(key: _mapDetailsDisplayWidget),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  MemberDetails(this.memberForMemberDetails)
+                  ],
+                );
+              },
            ),
-            MemberDetails(this.memberForMemberDetails)
-          ],
-        ),
       ),
     );
   }
@@ -179,7 +307,7 @@ class MemberDetails extends StatelessWidget {
           if(member.role == "Professor") Text("Faculty ID: ${member.memberID}"),
           if(member.role == "Student") Text("Register Number: ${member.memberID}"),
           if(member.name != "Default") Text("Status: ${member.status}"),
-          if(member.name != "Default") Text("Location: ${member.building} / ${member.floor} / ${member.room}")
+          //if(member.name != "Default") Text("Location: ${member.building} / ${member.floor} / ${member.room}")
         ],
       ),
     );
