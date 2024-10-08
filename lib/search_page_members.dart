@@ -7,6 +7,8 @@ import 'drop_down_box.dart';
 import 'draw_map_text.dart';
 import 'custom_datatypes/member.dart';
 import 'members_search_bar.dart';
+import 'single_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 class SearchPage extends StatefulWidget {
@@ -57,6 +59,15 @@ class _SearchPageState extends State<SearchPage> {
     _mapDetailsDisplayWidget.currentState?.refreshName(name);
   }
 
+  Stream<QuerySnapshot> fetchUsersStream() {
+    return FirestoreService()
+        .firestore
+        .collection("institution_members")
+        .where("name", isEqualTo: name)
+        .where("institution_id", isEqualTo: appUserInstitutionID)
+        .limit(1)
+        .snapshots();
+  }
 
   void displayMemberDetails(String memberName)
   {
@@ -143,7 +154,6 @@ class _SearchPageState extends State<SearchPage> {
             height: 15,
            ),
             MemberDetails(this.memberForMemberDetails)
-            //if(doDisplayMemberDetails) MapDetailsDisplayWidget(key: _mapDetailsDisplayWidget),
           ],
         ),
       ),

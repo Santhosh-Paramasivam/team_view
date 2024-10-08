@@ -325,40 +325,7 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
       });
     }
   }
-  /*
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-          child: Column(children: [
-            Row(children: [
-              TextButton(onPressed: this.moveLeft, child: const Text("<")),
-              TextButton(onPressed: this.moveRight, child: const Text(">")),
-              TextButton(onPressed: this.moveUp, child: const Text("^")),
-              TextButton(onPressed: this.moveDown, child: const Text("v")),
-              TextButton(onPressed: this.zoomIn, child: const Text("+")),
-              TextButton(onPressed: this.zoomOut, child: const Text("-")),
-            ]),
-           GestureDetector
-            (
-              onScaleStart: _onScaleStart,
-              onScaleUpdate: _onScaleUpdate,
-              child: Container(
-                width: 350,
-                height: 500,
-                color: const Color.fromARGB(255, 255, 255, 255),
-                child: RepaintBoundary(child: 
-                 CustomPaint(
-                painter: PointsPainter(
-                      xposition, yposition, scale, roomsOnFloor, memberSearched, buildingBoundaries, centering, getPathAndSize,
-                )
-              )
-            )
-          )
-        )
-      ]
-    ));
-  }
-  */
+ 
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -374,15 +341,6 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
             StreamBuilder<QuerySnapshot>(
               stream: fetchUsersStream(),
               builder: (context, snapshot) {
-                /*
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Container(
-                    width: double.infinity,
-                    height: 500,
-                    color: const Color.fromARGB(255, 255, 255, 255),
-                    child: CircularProgressIndicator());
-                }
-                */
                 if (snapshot.hasError) {
                       return Container(
                     width: double.infinity,

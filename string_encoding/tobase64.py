@@ -1,7 +1,7 @@
 import base64
 import json
 
-with open("trial2-28f4d-firebase-adminsdk-jeljk-76c11209a7.json", "r") as infile:
+with open(r"C:\Users\Santhosh\Desktop\Studies\All Projects\Flutter\team_view_no_database\string_encoding\membertracking-e18e2-firebase-adminsdk-2w32h-77b1b03ff3.json", "r") as infile:
     json_data = infile.read()
     print(json_data)
 

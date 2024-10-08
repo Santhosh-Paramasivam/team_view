@@ -65,6 +65,8 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
   late double initialScale; // To keep track of the previous drag position
   late Size drawingWindowSize;
 
+  late bool mapLoadingUp = true;
+
   late Path path;
   late List<Path> roomPaths = <Path>[];
 
@@ -80,6 +82,7 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
     scale = 0.6;
 
     buildingId = 1;
+    buildingName = "SRMIST";
 
     personName = "";
     floorName = "GroundFloor";
@@ -89,7 +92,8 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
     initialScale = 1.0;
 
     //loadingPersonRoom();
-    buildingOffsetsLoad();
+    //buildingOffsetsLoad();
+    loadFloors();
   }
 
   void changeFloorAndBuilding(floor, building) {
@@ -97,7 +101,8 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
       floorName = floor;
       buildingName = building;
       print(floorName);
-      buildingOffsetsLoad();
+      //buildingOffsetsLoad();
+      loadFloors();
     });
   }
 
@@ -128,7 +133,7 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
         .collection('institution_buildings')
         .doc(institutionDocName)
         .collection('buildings')
-        .where("building_name", isEqualTo: memberSearched.building)
+        .where("building_name", isEqualTo: buildingName)
         .limit(1)
         .get();
 
@@ -154,7 +159,7 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
         .collection('buildings')
         .doc(buildingDocName)
         .collection('floors')
-        .where('floor_name', isEqualTo: memberSearched.floor)
+        .where('floor_name', isEqualTo: floorName)
         .limit(1)
         .get();
 
@@ -237,6 +242,8 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
           }
         }
       }
+
+      mapLoadingUp = false;
     });
   }
 
@@ -256,7 +263,7 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
           //building['building_name'] == memberSearched.building,
           orElse: () => null);
 
-      print(events);
+      //print(events);
 
       if (events != null) {}
     });
@@ -312,13 +319,13 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
   }
 
   void _onTapDown(TapDownDetails details) {
-    print("Tap Down Detected");
     print(details.localPosition);
-
+    print(this.roomPaths[0].getBounds());
+    print(scaler(details.localPosition));
     if (this.roomPaths[0].contains(scaler(details.localPosition))) {
-      print("The rectangle has been toucheth");
+      print("First room touched");
     } else {
-      print("RIP BOZO");
+      print("First room NOT touched");
     }
   }
 
@@ -328,14 +335,14 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
   }
 
   void _onScaleUpdate(ScaleUpdateDetails details) {
-    setState(() {
-      scale = initialScale * details.scale;
-
-      // Handle panning while scaling
-      xposition -= (details.focalPoint.dx - previousOffset.dx).toInt();
-      yposition -= (details.focalPoint.dy - previousOffset.dy).toInt();
-      previousOffset = details.focalPoint;
-    });
+     if ((details.scale - scale).abs() > 0.01 || (details.focalPoint - previousOffset).distance > 5) {
+      setState(() {
+        scale = initialScale * details.scale;
+        xposition -= ((1/scale) * (details.focalPoint.dx - previousOffset.dx)).toInt();
+        yposition -= ((1/scale) * (details.focalPoint.dy - previousOffset.dy)).toInt();
+        previousOffset = details.focalPoint;
+      });
+    }
   }
 
   @override
@@ -350,6 +357,8 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
           TextButton(onPressed: this.zoomIn, child: const Text("+")),
           TextButton(onPressed: this.zoomOut, child: const Text("-")),
         ]),
+        mapLoadingUp ?
+        Center(child: CircularProgressIndicator()) :
         GestureDetector(
             onScaleStart: _onScaleStart,
             onScaleUpdate: _onScaleUpdate,
@@ -390,6 +399,8 @@ class PointsPainter extends CustomPainter {
   List<Offset> buildingBoundaries;
   Offset roomCentering;
 
+  Offset buildingBoundariesSum = Offset(0,0);
+
   late List<Path> roomPaths = <Path>[];
 
   final void Function(List<Path>, Size) sendPath;
@@ -425,8 +436,8 @@ class PointsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.translate((size.width / 2 - scale * (roomCentering.dx)),
-        (size.height / 2 - scale * (roomCentering.dy)));
+    //canvas.translate((size.width / 2 - scale * (roomCentering.dx)),
+    //    (size.height / 2 - scale * (roomCentering.dy)));
 
     final textStyle = TextStyle(
       color: const Color.fromARGB(255, 0, 154, 82),
@@ -442,8 +453,14 @@ class PointsPainter extends CustomPainter {
           scale * (buildingVertex.dx - xposition),
           scale * (buildingVertex.dy - yposition));
       buildingVerticesTranformed.add(transformedBuildingVertex);
-    }
 
+      buildingBoundariesSum = Offset(buildingBoundariesSum.dx + transformedBuildingVertex.dx, buildingBoundariesSum.dy + transformedBuildingVertex.dy);
+    }
+    
+    //Earlier this code fixed the rectangle clicking
+    // If you implement something, do it completely
+    //roomCentering = Offset(buildingBoundariesSum.dx / buildingBoundaries.length, buildingBoundariesSum.dy / buildingBoundaries.length);
+    canvas.translate((size.width / 2 - scale * (roomCentering.dx)),(size.height / 2 - scale * (roomCentering.dy)));
     for (int i = 0; i < buildingVerticesTranformed.length; i++) {
       Offset start = buildingVerticesTranformed[i];
       Offset end = buildingVerticesTranformed[
@@ -470,6 +487,26 @@ class PointsPainter extends CustomPainter {
         return Offset(
             scale * (point.dx - xposition), scale * (point.dy - yposition));
       }).toList();
+
+      bool noneInside = true;
+      for (int i = 0; i < pointsTransformed.length; i++) {
+        if((pointsTransformed[i].dx < size.width - (size.width/2 - scale*(roomCentering.dx)) && pointsTransformed[i].dx > -1 * (size.width/2 - scale*(roomCentering.dx))) && 
+           (pointsTransformed[i].dy < size.height - (size.height/2 - scale*(roomCentering.dy)) && pointsTransformed[i].dy > -1 * (size.height/2 - scale*(roomCentering.dy))))
+        {
+            noneInside = false;
+            break;
+        }
+      }
+
+      canvas.drawPoints(PointMode.points, [Offset(390,500)], pathPaintFill);
+      canvas.drawCircle(Offset(0,0),10, pathPaintFill);
+
+      if(noneInside)
+      {
+        print(room.roomName);
+        print("Not calculated");
+        continue;
+      }
 
       for (int i = 0; i < pointsTransformed.length; i++) {
         Offset start = pointsTransformed[i];

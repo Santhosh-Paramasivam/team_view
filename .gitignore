@@ -46,3 +46,6 @@ app.*.map.json
 python_backend/service_keys/
 android/app/google-services.json
 lib/firebase_options.dart
+
+# string encoding
+string_encoding/
