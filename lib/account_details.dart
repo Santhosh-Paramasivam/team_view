@@ -8,6 +8,7 @@ import 'firebase_templates/firestore_query.dart';
 import 'firebase_templates/firestore_query_autoupdate.dart';
 import 'firebase_templates/firebase_query_returndata copy.dart';
 import 'firebase_templates/firestore_member_autoupdate_query.dart';
+import 'location_set_page.dart';
 
 class AccountDetails extends StatelessWidget
 {
@@ -64,7 +65,13 @@ class AccountDetails extends StatelessWidget
           MenuButton("Log Out", (context){
             Navigator.pop(context);
           }),
-          MenuButton("Search Page", (context){})
+          MenuButton("Set Location", (context){
+            Navigator.push
+            (
+              context,
+              MaterialPageRoute(builder: (context) => LocationSetPage())
+            );
+          }),
         ]
       )
       );

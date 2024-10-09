@@ -1,0 +1,53 @@
+{
+    "events":
+    [
+        {
+            "institution_id":1,
+            "building":"SRMIST",
+            "floor":"FirstFloor",
+            "room":"Room1",
+            "start_timestamp": 1,
+            "end_timestamp": 2,
+            "name":"CLA - 1 'CSE'",
+            "day":"Tuesday",
+            "display":true,
+            "expiry":2
+        },
+        {
+            "institution_id":1,
+            "building":"SRMIST",
+            "floor":"FirstFloor",
+            "room":"Room1",
+            "start_timestamp": 1,
+            "end_timestamp": 2,
+            "name":"CLA - 1 'CSE'",
+            "day":"Tuesday",
+            "display":false,
+            "expiry":"Indefinite"
+        },
+        {
+            "institution_id":1,
+            "building":"SRMIST",
+            "floor":"FirstFloor",
+            "room":"Room2",
+            "start_timestamp": 1,
+            "end_timestamp": 2,
+            "name":"CLA - 1 'AIML'",
+            "day":"Tuesday",
+            "overwrite":false,
+            "expiry":"Indefinite"
+        },
+        {
+            "institution_id":1,
+            "building":"SRMIST",
+            "floor":"FirstFloor",
+            "room":"Room3",
+            "start_timestamp": 1,
+            "end_timestamp": 2,
+            "name":"CLA - 1 'CS'",
+            "day":"Monday",
+            "display":false,
+            "expiry":"Indefinite"
+        }
+    ]
+}
