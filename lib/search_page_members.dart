@@ -3,12 +3,14 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'drop_down_box.dart';
 import 'draw_map_text.dart';
 import 'members_search_bar.dart';
 import 'single_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
+import 'session_details.dart';
+import 'singleton_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Member
 {
@@ -69,13 +71,14 @@ class _SearchPageState extends State<SearchPage> {
   initState()
   {
     super.initState();
-    name = "Default";
     selectedInputType = "Person";
     memberForMemberDetails = Member("Default","SRMIST/GroundFloor/Room1",0,0,"Default Role","Default ID","Default Status");
-    doDisplayMemberDetails = false;
+    doDisplayMemberDetails = true;
     appUserInstitutionID = 1;
+    //name = "Santhosh Paramasivam";
+    displayMemberNew("Santhosh Paramasivam");
+    displayMemberDetails("Santhosh Paramasivam");
   }
-
 
   final List<DropdownMenuItem<String>> valuesInputType = [
     const DropdownMenuItem(value: 'Person', child: Text("Person")),
@@ -88,7 +91,6 @@ class _SearchPageState extends State<SearchPage> {
       name = memberName;
     } 
     );
-    await loadMemberDetails();
     _mapDetailsDisplayWidget.currentState?.refreshName(name);
   }
 
@@ -107,111 +109,7 @@ class _SearchPageState extends State<SearchPage> {
     setState(() {
       name = memberName;
     });
-    loadMemberDetails();
   }
-
-  Future<void> loadMemberDetails() async {
-
-    String jsonString = await rootBundle.loadString('assets/members.json');
-    setState(() {
-      jsonData = json.decode(jsonString);
-
-      var member = jsonData?["institution_members"]?.firstWhere(
-        (member) => member['name'] == name && member['institution_id'] == appUserInstitutionID,
-        orElse: () => null,
-      );
-      print(member);
-
-      if (member != null) {
-        doDisplayMemberDetails = true;
-        memberForMemberDetails.name = member['name'];
-        memberForMemberDetails.id = member['id'];
-        memberForMemberDetails.changeRFIDLocation(member['manual_location']);
-        memberForMemberDetails.institutionID = appUserInstitutionID;
-        memberForMemberDetails.role = member['user_role'];
-        memberForMemberDetails.status = member['status'];
-
-        if(memberForMemberDetails.role == "Professor")
-        {
-          memberForMemberDetails.memberID = member['faculty_id'];
-        }
-        else if(memberForMemberDetails.role == "Student")
-        {
-          memberForMemberDetails.memberID = member['register_id'];
-        }
-
-      } else {
-        doDisplayMemberDetails = false;
-      }
-    });
-  }
-
-  /*
-           StreamBuilder<QuerySnapshot>(
-              stream: fetchUsersStream(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                      return Container(
-                    width: double.infinity,
-                    height: 100,
-                    color: const Color.fromARGB(255, 255, 255, 255),
-                    child: Text("Error fetching data"));
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Container(
-                width: double.infinity,
-                height: 100,
-                color: const Color.fromARGB(255, 255, 255, 255),
-                child: Text("No user found"));
-                }
-
-                var doc = snapshot.data!.docs.first;
-                Map<String, dynamic> personDetails = doc.data() as Map<String, dynamic>;
-
-                final eq = const DeepCollectionEquality().equals;
-
-                if(!eq(personDetails, prevPersonDetails))
-                {
-                  print("Auto-update data reached");
-
-                    doDisplayMemberDetails = true;
-                    memberForMemberDetails.name = personDetails['name'];
-                    memberForMemberDetails.id = personDetails['id'];
-                    memberForMemberDetails.changeRFIDLocation(personDetails['rfid_location']);
-                    memberForMemberDetails.institutionID = appUserInstitutionID;
-                    memberForMemberDetails.role = personDetails['user_role'];
-                    memberForMemberDetails.status = personDetails['status'];
-
-                    if(memberForMemberDetails.role == "Professor")
-                    {
-                      memberForMemberDetails.memberID = personDetails['faculty_id'];
-                    }
-                    else if(memberForMemberDetails.role == "Student")
-                    {
-                      memberForMemberDetails.memberID = personDetails['register_id'];
-                    }
-                  prevPersonDetails = Map.from(personDetails);
-                }
-                return Column(
-                  children: <Widget>[
-                    Column(children: [
-                      Row(children: [
-                    const SizedBox(width: 10),
-                    Padding(padding: const EdgeInsets.fromLTRB(10, 15, 10, 15), child:  Text("${memberForMemberDetails.building} / ${memberForMemberDetails.floor}"),),
-                    const Spacer(),
-                    ],
-                    )
-                    ]),
-                    MapDetailsDisplayWidget(key: _mapDetailsDisplayWidget),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  MemberDetails(this.memberForMemberDetails)
-                  ],
-                );
-              },
-           ),
-           */
 
   @override
   Widget build(BuildContext context) {
@@ -220,7 +118,14 @@ class _SearchPageState extends State<SearchPage> {
       body: SizedBox(
         width: double.infinity,
         height: double.infinity,
-        child: StreamBuilder<QuerySnapshot>(
+        child: Column(children: [
+          Row(children: [
+                    const SizedBox(width: 10),
+                    Padding(padding: const EdgeInsets.fromLTRB(10, 15, 10, 15), child:  Text("${memberForMemberDetails.building} / ${memberForMemberDetails.floor} / ${memberForMemberDetails.room}"),),
+                    const Spacer(),
+                  ],
+          ),
+          StreamBuilder<QuerySnapshot>(
               stream: fetchUsersStream(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -235,7 +140,7 @@ class _SearchPageState extends State<SearchPage> {
                 width: double.infinity,
                 height: 100,
                 color: const Color.fromARGB(255, 255, 255, 255),
-                child: Text("No user found"));
+                child: Center(child: Text("Search for somebody!")));
                 }
 
                 var doc = snapshot.data!.docs.first;
@@ -265,26 +170,15 @@ class _SearchPageState extends State<SearchPage> {
                     }
                   prevPersonDetails = Map.from(personDetails);
                 }
-                return Column(
-                  children: <Widget>[
-                    Column(children: [
-                      Row(children: [
-                    const SizedBox(width: 10),
-                    Padding(padding: const EdgeInsets.fromLTRB(10, 15, 10, 15), child:  Text("${memberForMemberDetails.building} / ${memberForMemberDetails.floor} / ${memberForMemberDetails.room}"),),
-                    const Spacer(),
-                    ],
-                    )
-                    ]),
-                    MapDetailsDisplayWidget(key: _mapDetailsDisplayWidget),
-                  const SizedBox(
+                return  MapDetailsDisplayWidget(key: _mapDetailsDisplayWidget);
+                    },
+                ),
+                const SizedBox(
                     height: 15,
-                  ),
-                  MemberDetails(this.memberForMemberDetails)
-                  ],
-                );
-              },
-           ),
-      ),
+                ),
+                MemberDetails(this.memberForMemberDetails),
+        ],)      
+           )
     );
   }
 }

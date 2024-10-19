@@ -9,6 +9,8 @@ import 'firebase_templates/firestore_query_autoupdate.dart';
 import 'firebase_templates/firebase_query_returndata copy.dart';
 import 'firebase_templates/firestore_member_autoupdate_query.dart';
 import 'location_set_page.dart';
+import 'firebase_auth.dart';
+import 'auth_testing.dart';
 
 class AccountDetails extends StatelessWidget
 {
@@ -70,6 +72,20 @@ class AccountDetails extends StatelessWidget
             (
               context,
               MaterialPageRoute(builder: (context) => LocationSetPage())
+            );
+          }),
+           MenuButton("Auth", (context){
+            Navigator.push
+            (
+              context,
+              MaterialPageRoute(builder: (context) => AuthPage())
+            );
+          }),
+          MenuButton("Auth Testing", (context){
+            Navigator.push
+            (
+              context,
+              MaterialPageRoute(builder: (context) => AuthDetails())
             );
           }),
         ]

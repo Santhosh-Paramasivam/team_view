@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'account_details.dart';
+import 'singleton_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'single_firestore.dart';
+
 
 // ignore_for_file: must_be_immutable
 class Login extends StatelessWidget {
@@ -8,8 +13,26 @@ class Login extends StatelessWidget {
 
   TextEditingController emailInputController = TextEditingController();
   TextEditingController passwordInputController = TextEditingController();
-  String emailInput= 'santhosh123';
-  String passwordInput = 'santhosh123';
+    final FirebaseAuth _auth = AuthenticationService().firebaseAuth;
+  final FirebaseFirestore _firestore = FirestoreService().firestore;
+
+  void showEnteredDetails()
+  {
+    print(emailInputController.text);
+    print(passwordInputController.text);
+  }
+
+  Future<void> emailLogIn() async {
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: emailInputController.text,
+        password: passwordInputController.text,
+      );
+      print('User signed in');
+    } catch (e) {
+      print('Failed to sign in: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -306,6 +329,8 @@ class Login extends StatelessWidget {
         ),
         onPressed: () 
         {
+          emailLogIn();
+          showEnteredDetails();
           Navigator.push
           (
             context,

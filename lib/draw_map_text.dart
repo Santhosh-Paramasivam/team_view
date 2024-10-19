@@ -77,7 +77,7 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
 
     buildingId = 1;
 
-    personName = "";
+    personName = "Santhosh Paramasivam";
     floorName = "GroundFloor";
 
     appUserInstitutionID = 1;

@@ -6,6 +6,9 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'custom_datatypes/member.dart';
 import 'single_firestore.dart';
+import 'session_details.dart';
+import 'singleton_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RoomEventDetails {

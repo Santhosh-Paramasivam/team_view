@@ -74,22 +74,6 @@ class MemberSearchBarState extends State<MemberSearchBar> {
   });
 }
 
-  /*
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Search People"),
-        actions: [
-          IconButton(onPressed: (){
-            showSearch(context: context, delegate: CustomSearchDelegate(jsonSearchTerms, updateOptions, sendBackString));
-          }, 
-          icon: const Icon(Icons.search))
-        ],
-      ),
-    );
-  }
-  */
   @override
   AppBar build(BuildContext context) {
     return AppBar(
