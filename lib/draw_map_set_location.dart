@@ -5,11 +5,10 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'custom_datatypes/member.dart';
-import 'single_firestore.dart';
+import 'firebase_connections/singleton_firestore.dart';
 import 'session_details.dart';
-import 'singleton_auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'building_details.dart';
 
 class RoomEventDetails {
   String roomName;
@@ -51,7 +50,6 @@ class SetLocationMapWidgetState extends State<SetLocationMap> {
 
   late Member memberSearched;
 
-  late int buildingId;
   late String floorName;
   late String buildingName;
 
@@ -74,30 +72,51 @@ class SetLocationMapWidgetState extends State<SetLocationMap> {
   late List<Path> roomPaths = <Path>[];
   late List<String> loadedRooms = <String>[];
 
+  late bool inRoomSnackBar;
+
+  String roomClicked = "";
+
   @override
   void initState() {
     super.initState();
 
-    memberSearched = Member(
-        "Default", "A/B/C", 0, 0, "Default Role", "Default ID", "Status ID");
+    memberSearched = Member("Default", "A/B/C", 0, 0, "Default Role", "Default ID", "Status ID");
 
     xposition = 0;
     yposition = 0;
     scale = 0.6;
 
-    buildingId = 1;
-    buildingName = "SRMIST";
+    buildingName = BuildingDetails.buildings[0];
 
     personName = "";
-    floorName = "GroundFloor";
+    floorName = BuildingDetails.floors[0];
 
-    appUserInstitutionID = 1;
+    appUserInstitutionID = SessionDetails.institution_id;
     previousOffset = Offset.zero;
     initialScale = 1.0;
 
-    //loadingPersonRoom();
-    //buildingOffsetsLoad();
     loadFloors();
+  }
+
+  void updateLocation(String location) async 
+  {
+    print("update location reached");
+    QuerySnapshot snapshot = await FirestoreService().firestore
+          .collection('institution_members')
+          .where('institution_id', isEqualTo: appUserInstitutionID)
+          .where('id', isEqualTo: SessionDetails.id)
+          .limit(1)
+          .get()
+          ;
+
+    Map<String,dynamic> userData = snapshot.docs[0].data() as Map<String,dynamic>;    
+
+    await FirestoreService().firestore
+                .collection('institution_members')
+                .doc(snapshot.docs[0].id)
+                .update({'rfid_location':location,'in_room':!userData['in_room'],'last_location_entry':Timestamp.now()});
+  
+    inRoomSnackBar = !userData['in_room'];
   }
 
   void changeFloorAndBuilding(floor, building) {
@@ -105,6 +124,7 @@ class SetLocationMapWidgetState extends State<SetLocationMap> {
       mapLoadingUp = true;
       floorName = floor;
       buildingName = building;
+      roomClicked = "";
       print(floorName);
       //buildingOffsetsLoad();
       loadFloors();
@@ -199,59 +219,6 @@ class SetLocationMapWidgetState extends State<SetLocationMap> {
     });
   }
 
-  Future<void> buildingOffsetsLoad() async {
-    // Load the JSON file
-    String jsonString = await rootBundle.loadString('assets/buildings.json');
-
-    roomsOnFloor.clear();
-
-    ///print("offset func reached");
-
-    setState(() {
-      jsonData = json.decode(jsonString);
-
-      var building = jsonData?['buildings']?.firstWhere(
-          (building) =>
-              building['institution_id'] == appUserInstitutionID &&
-              //building['building_id'] == buildingId,
-              building['building_name'] == buildingName,
-          orElse: () => null);
-
-      //print(building);
-
-      if (building != null) {
-        var floorData = building[floorName];
-        var buildingCoordinates = building["BuildingBoundaries"];
-
-        //print(buildingCoordinates);
-        buildingCoordinates?.forEach((item) {
-          double x = item[0].toDouble();
-          double y = item[1].toDouble();
-          buildingBoundaries.add(Offset(x, y));
-        });
-        //print(buildingBoundaries);
-
-        floorData?.forEach((key, value) {
-          List<Offset> points = (value as List).map<Offset>((item) {
-            double x = item[0].toDouble();
-            double y = item[1].toDouble();
-            return Offset(x, y);
-          }).toList();
-
-          roomsOnFloor.add(Room(points, key));
-        });
-
-        for (Room room in roomsOnFloor) {
-          if (room.roomName == memberSearched.room) {
-            centering = const Offset(100, 100);
-          }
-        }
-      }
-
-      mapLoadingUp = false;
-    });
-  }
-
   Future<void> roomEventDetailsLoad() async {
     // Load the JSON file
     String jsonString = await rootBundle.loadString('assets/events.json');
@@ -330,9 +297,52 @@ class SetLocationMapWidgetState extends State<SetLocationMap> {
       if(this.roomPaths[i].contains(scaler(details.localPosition)))
       {
         print(this.buildingName + " "  + this.floorName + " " + this.loadedRooms[i]);
+        print(this.buildingName + "/"  + this.floorName + "/" + this.loadedRooms[i]);
+        
+        setState((){
+          roomClicked = this.loadedRooms[i];
+        });
+      
       }
     }
   }
+
+  void _onDoubleTapDown (TapDownDetails details)
+  {
+    for(int i = 0 ; i < this.roomPaths.length ; i++)
+    {
+      if(this.roomPaths[i].contains(scaler(details.localPosition)))
+      {
+        print(this.buildingName + " "  + this.floorName + " " + this.loadedRooms[i]);
+        print(this.buildingName + "/"  + this.floorName + "/" + this.loadedRooms[i]);
+        updateLocation(this.buildingName + "/"  + this.floorName + "/" + this.loadedRooms[i]);
+
+        if(inRoomSnackBar)
+        {
+          showSnackbar(context, "You exited " + this.buildingName + "/"  + this.floorName + "/" + this.loadedRooms[i]);
+        }
+        else
+        {
+          showSnackbar(context, "You entered " + this.buildingName + "/"  + this.floorName + "/" + this.loadedRooms[i]);
+        }
+
+
+        //showSnackbar(context, inRoomSnackBar.toString());
+      }
+    }
+
+    //showSnackbar(context, "Your location was changed!");
+  }
+
+  void showSnackbar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      backgroundColor: Colors.white,
+      content: Text(message, style: TextStyle(color: Colors.black)),
+      duration: Duration(seconds: 2), // Adjust duration as needed
+    ),
+  );
+}
 
   void _onScaleStart(ScaleStartDetails details) {
     initialScale = scale;
@@ -372,10 +382,11 @@ class SetLocationMapWidgetState extends State<SetLocationMap> {
         GestureDetector(
             onScaleStart: _onScaleStart,
             onScaleUpdate: _onScaleUpdate,
+            onDoubleTapDown:  _onDoubleTapDown,
             onTapDown: _onTapDown,
             child: Container(
                 width: double.infinity,
-                height: 500,
+                height: 400,
                 color: const Color.fromARGB(255, 255, 255, 255),
                 child: CustomPaint(
                     painter: PointsPainter(
@@ -387,7 +398,11 @@ class SetLocationMapWidgetState extends State<SetLocationMap> {
                   buildingBoundaries,
                   centering,
                   getPathAndSize,
-                ))))
+                  roomClicked,
+                  buildingName,
+                  floorName
+                )))),
+        MemberDetails()
       ]),
     );
   }
@@ -413,6 +428,10 @@ class PointsPainter extends CustomPainter {
 
   late List<Path> roomPaths = <Path>[];
   late List<String> loadedRooms = <String>[];
+
+  String roomClicked;
+  String buildingName;
+  String floorName;
 
   final void Function(List<Path>, Size, List<String>) sendPath;
 
@@ -442,7 +461,11 @@ class PointsPainter extends CustomPainter {
       this.memberSearched,
       this.buildingBoundaries,
       this.roomCentering,
-      this.sendPath);
+      this.sendPath,
+      this.roomClicked,
+      this.buildingName,
+      this.floorName
+      );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -468,7 +491,7 @@ class PointsPainter extends CustomPainter {
       buildingBoundariesSum = Offset(buildingBoundariesSum.dx + transformedBuildingVertex.dx, buildingBoundariesSum.dy + transformedBuildingVertex.dy);
     }
     
-    //Earlier this code broke the rectangle clicking
+    // Earlier this code broke the rectangle clicking
     // If you implement something, do it completely
     //roomCentering = Offset(buildingBoundariesSum.dx / buildingBoundaries.length, buildingBoundariesSum.dy / buildingBoundaries.length);
     canvas.translate((size.width / 2 - scale * (roomCentering.dx)),(size.height / 2 - scale * (roomCentering.dy)));
@@ -533,18 +556,14 @@ class PointsPainter extends CustomPainter {
       roomPaths.add(roomPath);
       loadedRooms.add(currentRoomName);
 
-      if (currentRoomName == memberSearched.room && memberSearched.name != "") {
+      if (currentRoomName == roomClicked) {
         canvas.drawPath(roomPath, pathPaintStrokePresent);
         canvas.drawPath(roomPath, pathPaintFill);
       } else {
         canvas.drawPath(roomPath, pathPaintStrokeAbsent);
       }
 
-      if (currentRoomName == memberSearched.room && memberSearched.name != "") {
-        finalTextDisplayed = "Person in\n$currentRoomName";
-      } else {
-        finalTextDisplayed = currentRoomName;
-      }
+      finalTextDisplayed = currentRoomName;
 
       TextSpan textSpan = TextSpan(
         text: finalTextDisplayed,
@@ -587,7 +606,24 @@ class PointsPainter extends CustomPainter {
         oldDelegate.scale != scale ||
         oldDelegate.roomsOnFloor != roomsOnFloor ||
         oldDelegate.avgdX != avgdX ||
-        oldDelegate.memberSearched != memberSearched ||
         oldDelegate.avgdY != avgdY;
+  }
+}
+
+class MemberDetails extends StatelessWidget {
+  
+  const MemberDetails();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 500,
+      height: 100,
+      child: Column(
+        children: [
+          Text("EEEEE")
+        ],
+      ),
+    );
   }
 }

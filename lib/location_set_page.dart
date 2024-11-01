@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'drop_down_box.dart';
 import 'draw_map_set_location.dart';
+import 'building_details.dart';
 
 class RoomEventDetails {
   String roomName;
@@ -18,18 +19,32 @@ class LocationSetPage extends StatefulWidget {
 
 class _LocationSetPageState extends State<LocationSetPage> {
 
-  final List<DropdownMenuItem<String>> valuesBuilding = [
-    const DropdownMenuItem(value: 'SRMIST', child: Text("SRMIST")),
-  ];
+  String selectedBuilding = BuildingDetails.buildings[0];
+  String selectedFloor = BuildingDetails.floors[0];
 
-  final List<DropdownMenuItem<String>> valuesFloor = [
-    const DropdownMenuItem(value: 'GroundFloor', child: Text("GroundFloor")),
-    const DropdownMenuItem(value: 'FirstFloor', child: Text("FirstFloor")),
-    const DropdownMenuItem(value: 'SecondFloor', child: Text("SecondFloor"))
-  ];
+  List<DropdownMenuItem<String>> dynamicValuesBuilding()
+  {
+    List<DropdownMenuItem<String>> valuesBuilding = [];
 
-  String selectedBuilding = "SRMIST";
-  String selectedFloor = "GroundFloor";
+    for(String building in BuildingDetails.buildings)
+    {
+      valuesBuilding.add(DropdownMenuItem(value: building, child: Text(building)));
+    }
+
+    return valuesBuilding;
+  }
+
+  List<DropdownMenuItem<String>> dynamicValuesFloors()
+  {
+    List<DropdownMenuItem<String>> valuesFloors = [];
+
+    for(String floor in BuildingDetails.floors)
+    {
+      valuesFloors.add(DropdownMenuItem(value: floor, child: Text(floor)));
+    }
+
+    return valuesFloors;
+  }
 
   final GlobalKey<SetLocationMapWidgetState> _mapDetailsDisplayWidget =
       GlobalKey<SetLocationMapWidgetState>();
@@ -51,7 +66,7 @@ class _LocationSetPageState extends State<LocationSetPage> {
               children: [
                 CustomDropdownButton(
                   value: selectedBuilding,
-                  items: valuesBuilding,
+                  items: dynamicValuesBuilding(),
                   onChanged: (String? chosenBuilding) {
                     setState(() {
                       if (chosenBuilding != null) {
@@ -66,7 +81,7 @@ class _LocationSetPageState extends State<LocationSetPage> {
                 ),
                 CustomDropdownButton(
                   value: selectedFloor,
-                  items: valuesFloor,
+                  items: dynamicValuesFloors(),
                   onChanged: (String? chosenFloor) {
                     setState(() {
                       if (chosenFloor != null) {

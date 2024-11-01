@@ -49,3 +49,6 @@ lib/firebase_options.dart
 
 # string encoding
 string_encoding/
+
+# uids
+uids/

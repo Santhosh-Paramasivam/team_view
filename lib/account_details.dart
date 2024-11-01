@@ -4,10 +4,8 @@ import 'package:flutter/material.dart';
 import 'search_page_members.dart';
 import 'status_and_visibility.dart';
 import 'search_page_room.dart';
-import 'firebase_templates/firestore_query.dart';
 import 'firebase_templates/firestore_query_autoupdate.dart';
-import 'firebase_templates/firebase_query_returndata copy.dart';
-import 'firebase_templates/firestore_member_autoupdate_query.dart';
+import 'firebase_query_returndata copy.dart';
 import 'location_set_page.dart';
 import 'firebase_auth.dart';
 import 'auth_testing.dart';
@@ -61,7 +59,7 @@ class AccountDetails extends StatelessWidget
             Navigator.push
             (
               context,
-              MaterialPageRoute(builder: (context) => MemberAutoUpdate())
+              MaterialPageRoute(builder: (context) => ReturnShowData())
             );
           }),
           MenuButton("Log Out", (context){

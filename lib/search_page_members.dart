@@ -5,26 +5,23 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'draw_map_text.dart';
 import 'members_search_bar.dart';
-import 'single_firestore.dart';
+import 'firebase_connections/singleton_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'session_details.dart';
-import 'singleton_auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class Member
 {
   String name;
   String rfidLocation;
   int institutionID;
-  int id;
+  String id;
   late String floor;
   late String building;
   late String room;
   String role;
   String memberID;
   String status;
-  //int buildingID;
 
   Member(this.name, this.rfidLocation, this.institutionID, this.id, this.role, this.memberID, this.status)
   {
@@ -72,19 +69,13 @@ class _SearchPageState extends State<SearchPage> {
   {
     super.initState();
     selectedInputType = "Person";
-    memberForMemberDetails = Member("Default","SRMIST/GroundFloor/Room1",0,0,"Default Role","Default ID","Default Status");
+    memberForMemberDetails = Member("Default","SRMIST/GroundFloor/Room1",0,"","Default Role","Default ID","Default Status");
     doDisplayMemberDetails = true;
     appUserInstitutionID = 1;
     //name = "Santhosh Paramasivam";
-    displayMemberNew("Santhosh Paramasivam");
-    displayMemberDetails("Santhosh Paramasivam");
+    displayMemberNew(SessionDetails.name);
+    displayMemberDetails(SessionDetails.name);
   }
-
-  final List<DropdownMenuItem<String>> valuesInputType = [
-    const DropdownMenuItem(value: 'Person', child: Text("Person")),
-    const DropdownMenuItem(value: 'Room',child: Text("Room")),
-    const DropdownMenuItem(value: 'Designation', child: Text("Designation")),
-  ];
 
   void displayMemberNew(String memberName) async{
     setState(() {
@@ -119,12 +110,6 @@ class _SearchPageState extends State<SearchPage> {
         width: double.infinity,
         height: double.infinity,
         child: Column(children: [
-          Row(children: [
-                    const SizedBox(width: 10),
-                    Padding(padding: const EdgeInsets.fromLTRB(10, 15, 10, 15), child:  Text("${memberForMemberDetails.building} / ${memberForMemberDetails.floor} / ${memberForMemberDetails.room}"),),
-                    const Spacer(),
-                  ],
-          ),
           StreamBuilder<QuerySnapshot>(
               stream: fetchUsersStream(),
               builder: (context, snapshot) {
@@ -140,7 +125,7 @@ class _SearchPageState extends State<SearchPage> {
                 width: double.infinity,
                 height: 100,
                 color: const Color.fromARGB(255, 255, 255, 255),
-                child: Center(child: Text("Search for somebody!")));
+                child: Center(child: CircularProgressIndicator()));
                 }
 
                 var doc = snapshot.data!.docs.first;
@@ -170,13 +155,23 @@ class _SearchPageState extends State<SearchPage> {
                     }
                   prevPersonDetails = Map.from(personDetails);
                 }
-                return  MapDetailsDisplayWidget(key: _mapDetailsDisplayWidget);
+                return  
+                Column(children: [
+                          Row(children: [
+                              const SizedBox(width: 10),
+                              Padding(padding: const EdgeInsets.fromLTRB(10, 15, 10, 15), 
+                              child:  Text("${memberForMemberDetails.building} / ${memberForMemberDetails.floor} / ${memberForMemberDetails.room}"),),
+                              const Spacer(),
+                            ],
+                          ),
+                          MapDetailsDisplayWidget(key: _mapDetailsDisplayWidget),
+                          const SizedBox(
+                              height: 15,
+                          ),
+                          MemberDetails(this.memberForMemberDetails),
+                        ]);
                     },
                 ),
-                const SizedBox(
-                    height: 15,
-                ),
-                MemberDetails(this.memberForMemberDetails),
         ],)      
            )
     );

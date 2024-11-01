@@ -4,10 +4,42 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'custom_datatypes/member.dart';
-import 'single_firestore.dart';
+import 'firebase_connections/singleton_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
+import 'session_details.dart';
+
+class Member
+{
+  String name;
+  String rfidLocation;
+  int institutionID;
+  String id;
+  late String floor;
+  late String building;
+  late String room;
+  String role;
+  String memberID;
+  String status;
+  //int buildingID;
+
+  Member(this.name, this.rfidLocation, this.institutionID, this.id, this.role, this.memberID, this.status)
+  {
+    List<String> rfidLocationList = rfidLocation.split("/");
+    building = rfidLocationList[0];
+    floor = rfidLocationList[1];
+    room = rfidLocationList[2];
+  }
+
+  void changeRFIDLocation(String newRFIDLocation)
+  {
+    rfidLocation = newRFIDLocation;
+    List<String> rfidLocationList = rfidLocation.split("/");
+    building= rfidLocationList[0];
+    floor = rfidLocationList[1];
+    room = rfidLocationList[2];
+  }
+}
 
 class Room {
   List<Offset> roomVertices;
@@ -43,9 +75,6 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
 
   late Member memberSearched;
 
-  late int buildingId;
-  late String floorName;
-
   late String personName;
 
   late int appUserInstitutionID;
@@ -69,101 +98,33 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
   void initState() {
     super.initState();
 
-    memberSearched = Member("Default", "A/B/C", 0, 0, "Default Role","Default ID","Status ID");
+    memberSearched = Member("Default", "A/B/C", 0, "9", "Default Role","Default ID","Status ID");
 
     xposition = 0;
     yposition = 0;
     scale = 0.6;
+    personName = SessionDetails.name;
 
-    buildingId = 1;
-
-    personName = "Santhosh Paramasivam";
-    floorName = "GroundFloor";
-
-    appUserInstitutionID = 1;
+    appUserInstitutionID = SessionDetails.institution_id;
     previousOffset = Offset.zero;
     initialScale = 1.0;
 
     mapLoadingUp = true;
-    loadingPersonRoomCloud();
     loadFloors();
   }
 
-  void refreshName(name) {
-  setState(() {
-    personName = name;
-    xposition = 0;  // Reset panning
-    yposition = 0;  // Reset panning
-    scale = 0.6;    // Optionally reset the scale if needed
+    void refreshName(name) {
+    setState(() {
+      personName = name;
+      xposition = 0;  // Reset panning
+      yposition = 0;  // Reset panning
+      scale = 0.6;    // Optionally reset the scale if needed
 
-    mapLoadingUp = true;
-    loadingPersonRoom();
-    loadFloors();
-  });
-}
-
-
-  void changeFloor(floor)
-  {
-    setState((){
-      floorName = floor;
       mapLoadingUp = true;
-      loadingPersonRoom();
       loadFloors();
     });
   }
 
-  Future<void> loadingPersonRoom() async {
-  try {
-    // Load the JSON file
-    String jsonString = await rootBundle.loadString('assets/members.json');
-    // Parse the JSON
-    setState(() {
-      jsonData = json.decode(jsonString);
-
-      // Find the specific person
-      var person = jsonData?['institution_members']?.firstWhere(
-        (member) => member['name'] == personName && member["institution_id"] == appUserInstitutionID,
-        orElse: () => null,
-      );
-      /* IMPORTANT COMMENT: ONLY THE INSTITUION OF THE USER MUST BE QUERIED */
-      // Check if person is null before accessing its properties
-      memberSearched.changeRFIDLocation(person?['manual_location'] ?? 'A/B/C');
-      memberSearched.name = person?['name'] ?? 'Default';
-      memberSearched.id = person?['id'] ?? 0;
-      memberSearched.institutionID = person?['id'] ?? 0; 
-      });
-    } catch (e) {
-      print('Error loading JSON: $e');
-    }
-  }
-
-  Future<void> loadingPersonRoomCloud() async {
-  try {
-
-    await FirestoreService().firestore
-          .collection("institution_members")
-          .where("name", isEqualTo: personName)
-          .where("institution_id", isEqualTo: appUserInstitutionID)
-          .limit(1)
-          .snapshots()
-          .listen((event) {
-       setState(()
-       {
-         for (var doc in event.docs) {
-          Map<String,dynamic> personDetails = doc.data() as Map<String,dynamic>;
-          memberSearched.changeRFIDLocation(personDetails['rfid_location']);
-          memberSearched.name = personDetails['name'];
-          memberSearched.institutionID = personDetails['institution_id'];
-          memberSearched.id = personDetails['id'];
-        }
-       });
-          
-      });
-    } catch (e) {
-      print('Error loading JSON: $e');
-    }
-  }
 
   Stream<QuerySnapshot> fetchUsersStream() {
     return FirestoreService()
@@ -361,12 +322,6 @@ class MapDetailsDisplayWidgetState extends State<MapDetailsDisplayWidget> {
 
                 final eq = const DeepCollectionEquality().equals;
 
-                //print(personDetails['rfid_location']);
-                //print(personDetails['name']);
-                //print(personDetails['institution_id']);
-                //print(personDetails['id']);
-                ///print(personDetails);
-                //print(prevPersonDetails);
                 if(!eq(personDetails, prevPersonDetails))
                 {
                   print("Auto-update data reached");
@@ -513,7 +468,6 @@ class PointsPainter extends CustomPainter {
       }
 
       canvas.drawPoints(PointMode.points, [Offset(390,500)], pathPaintFill);
-      //canvas.drawCircle(Offset(0,0),10, pathPaintFill);
 
       if(noneInside) continue;
 
